@@ -9,10 +9,27 @@ import (
 	"github.com/TerraEmpleo/TerraEmpleoServices/services/userService/models"
 )
 
+// Validar si el rol proporcionado es válido
+func isValidRole(role models.Role) bool {
+	switch role {
+	case models.RoleAdmin, models.RoleFarmer, models.RoleEmployer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Registrar un usuario con validación de rol
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Verificar si el rol es válido
+	if !isValidRole(user.Role) {
+		http.Error(w, "Invalid role. Must be 'admin', 'farmer', or 'employer'", http.StatusBadRequest)
 		return
 	}
 
