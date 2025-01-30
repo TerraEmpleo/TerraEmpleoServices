@@ -128,3 +128,40 @@ func DeleteJob(w http.ResponseWriter, r *http.Request) {
 		"message": "Job deleted successfully",
 	})
 }
+func SearchJobs(w http.ResponseWriter, r *http.Request) {
+	var jobs []models.Job
+	query := database.DB
+
+	// Obtener parámetros de consulta (query params)
+	title := r.URL.Query().Get("title")
+	location := r.URL.Query().Get("location")
+	minSalary := r.URL.Query().Get("min_salary")
+	maxSalary := r.URL.Query().Get("max_salary")
+	categoryID := r.URL.Query().Get("category_id")
+
+	// Aplicar filtros dinámicos
+	if title != "" {
+		query = query.Where("title ILIKE ?", "%"+title+"%")
+	}
+	if location != "" {
+		query = query.Where("location ILIKE ?", "%"+location+"%")
+	}
+	if minSalary != "" {
+		query = query.Where("salary >= ?", minSalary)
+	}
+	if maxSalary != "" {
+		query = query.Where("salary <= ?", maxSalary)
+	}
+	if categoryID != "" {
+		query = query.Where("category_id = ?", categoryID)
+	}
+
+	// Ejecutar consulta
+	if err := query.Find(&jobs).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(jobs)
+}
+

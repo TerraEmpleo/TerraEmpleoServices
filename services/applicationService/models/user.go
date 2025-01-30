@@ -19,6 +19,6 @@ type User struct {
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 
-	// Relación con UserProfile (Usamos puntero para evitar recursión)
-	Profile *UserProfile `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	// Relación con Applications (N:N)
+	Applications []Application `gorm:"many2many:user_applications"`
 }

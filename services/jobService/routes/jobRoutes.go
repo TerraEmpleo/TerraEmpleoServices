@@ -11,4 +11,5 @@ func JobRoutes(router *mux.Router) {
 	router.HandleFunc("/jobs", handlers.CreateJob).Methods("POST")
 	router.HandleFunc("/jobs/{id}", handlers.UpdateJob).Methods("PUT")
 	router.HandleFunc("/jobs/{id}", handlers.DeleteJob).Methods("DELETE")
+	router.HandleFunc("/jobs/search", handlers.SearchJobs).Methods("GET")
 }
