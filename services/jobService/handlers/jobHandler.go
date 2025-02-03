@@ -8,6 +8,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/TerraEmpleo/TerraEmpleoServices/services/jobService/database"
 	"github.com/TerraEmpleo/TerraEmpleoServices/services/jobService/models"
+	"strconv"
+	"log"
 )
 
 // Obtener todas las ofertas de empleo
@@ -30,36 +32,63 @@ func GetJob(w http.ResponseWriter, r *http.Request) {
 
 // Crear una nueva oferta de empleo con validación de empleador
 func CreateJob(w http.ResponseWriter, r *http.Request) {
-	var job models.Job
+	params := mux.Vars(r)
 
-	// Decodificar el JSON del request
-	if err := json.NewDecoder(r.Body).Decode(&job); err != nil {
+	// Obtener `user_id` de la URL
+	userIDStr, exists := params["user_id"]
+	if !exists || userIDStr == "" {
+		http.Error(w, "User ID is required in the URL", http.StatusBadRequest)
+		return
+	}
+
+	// Convertir `user_id` a número
+	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		http.Error(w, "Invalid User ID", http.StatusBadRequest)
+		return
+	}
+
+	var requestBody struct {
+		Title       string  `json:"title"`
+		Description string  `json:"description"`
+		Location    string  `json:"location"`
+		Salary      float64 `json:"salary"`
+		CategoryID  uint    `json:"category_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	// 🟢 Imprimir valores para depuración
+	log.Println("CategoryID recibido:", requestBody.CategoryID)
+
+	// Crear la oferta con los valores recibidos
+	job := models.Job{
+		Title:       requestBody.Title,
+		Description: requestBody.Description,
+		Location:    requestBody.Location,
+		Salary:      requestBody.Salary,
+		EmployerID:  uint(userID),
+		CategoryID:  requestBody.CategoryID,
 	}
 
 	// Iniciar la transacción
 	tx := database.DB.Begin()
 
-	// Verificar que el usuario que crea la oferta existe
-	var user models.User
-	if err := tx.First(&user, job.EmployerID).Error; err != nil {
-		tx.Rollback() // 🚨 Revertir si hay error
-		http.Error(w, fmt.Sprintf("User with ID %d does not exist", job.EmployerID), http.StatusBadRequest)
-		return
-	}
-
 	// Verificar que la categoría existe
 	var category models.Category
 	if err := tx.First(&category, job.CategoryID).Error; err != nil {
-		tx.Rollback() // 🚨 Revertir si hay error
+		log.Println("Error: Categoría no encontrada - ID:", job.CategoryID)
+		tx.Rollback()
 		http.Error(w, fmt.Sprintf("Category with ID %d does not exist", job.CategoryID), http.StatusBadRequest)
 		return
 	}
 
 	// Crear la oferta de empleo dentro de la transacción
 	if err := tx.Create(&job).Error; err != nil {
-		tx.Rollback() // 🚨 Revertir si hay error
+		tx.Rollback()
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -70,6 +99,7 @@ func CreateJob(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(job)
 }
+
 
 // Actualizar una oferta de empleo
 func UpdateJob(w http.ResponseWriter, r *http.Request) {

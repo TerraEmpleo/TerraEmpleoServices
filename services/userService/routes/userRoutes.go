@@ -9,8 +9,7 @@ func UserRoutes(router *mux.Router) {
 	// CRUD de usuarios
 	router.HandleFunc("/users", handlers.GetUsers).Methods("GET")
 	router.HandleFunc("/users", handlers.UpdateUser).Methods("PUT")
-	router.HandleFunc("/users", handlers.DeleteUser).Methods("DELETE")
-
+	router.HandleFunc("/users/{user_id:[0-9]+}", handlers.DeleteUser).Methods("DELETE")
 	// Autenticación
 	router.HandleFunc("/users/register", handlers.RegisterUser).Methods("POST")
 	router.HandleFunc("/users/login", handlers.LoginUser).Methods("POST")

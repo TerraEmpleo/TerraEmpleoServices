@@ -7,8 +7,10 @@ import (
 
 func ProfileRoutes(router *mux.Router) {
 	router.HandleFunc("/profiles", handlers.GetProfiles).Methods("GET")
-	router.HandleFunc("/profiles/{id}", handlers.GetProfile).Methods("GET")
+	router.HandleFunc("/profiles/{user_id:[0-9]+}", handlers.GetProfile).Methods("GET")
 	router.HandleFunc("/profiles", handlers.CreateProfile).Methods("POST")
-	router.HandleFunc("/profiles/{id}", handlers.UpdateProfile).Methods("PUT")
-	router.HandleFunc("/profiles/{id}", handlers.DeleteProfile).Methods("DELETE")
+	router.HandleFunc("/profiles/{user_id:[0-9]+}", handlers.UpdateProfile).Methods("PUT")
+	router.HandleFunc("/profiles/{id:[0-9]+}", handlers.DeleteProfile).Methods("DELETE")
 }
+
+

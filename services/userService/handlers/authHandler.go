@@ -27,6 +27,11 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Si el usuario no proporciona un rol, asignar "employer" por defecto
+	if user.Role == "" {
+		user.Role = models.RoleEmployer
+	}
+
 	// Verificar si el rol es válido
 	if !isValidRole(user.Role) {
 		http.Error(w, "Invalid role. Must be 'admin', 'farmer', or 'employer'", http.StatusBadRequest)
@@ -41,15 +46,43 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 	user.Password = string(hashedPassword)
 
+	// Iniciar una transacción
+	tx := database.DB.Begin()
+
 	// Crear el usuario en la base de datos
-	if err := database.DB.Create(&user).Error; err != nil {
+	if err := tx.Create(&user).Error; err != nil {
+		tx.Rollback()
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	// ✅ Crear un perfil vacío para el usuario recién creado
+	profile := models.UserProfile{
+		UserID:     user.ID,
+		Location:   "",
+		Skills:     "",
+		Experience: 0,
+		ResumeURL:  "",
+		Bio:        "",
+	}
+
+	if err := tx.Create(&profile).Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Error creating user profile", http.StatusInternalServerError)
+		return
+	}
+
+	// Confirmar la transacción
+	tx.Commit()
+
+	// Enviar respuesta con el usuario y su perfil
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"user":    user,
+		"profile": profile,
+	})
 }
+
 
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	var credentials struct {
@@ -76,7 +109,10 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Login successful",
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":  "Login successful",
+		"user_id":  user.ID,
+		"email":    user.Email,
 	})
 }
+
