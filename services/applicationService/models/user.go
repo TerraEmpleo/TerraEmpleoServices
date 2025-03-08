@@ -20,5 +20,5 @@ type User struct {
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 
 	// Relación con Applications (N:N)
-	Applications []Application `gorm:"many2many:user_applications"`
+	Applications []UserApplication `gorm:"foreignKey:UserID"`
 }

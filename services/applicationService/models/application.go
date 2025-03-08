@@ -8,6 +8,6 @@ type Application struct {
 	CreatedAt time.Time `gorm:"autoCreateTime"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 
-	// Relación con User
-	Users []User `gorm:"many2many:user_applications"`
+	// Relación con Users (N:N)
+	Users []UserApplication `gorm:"foreignKey:ApplicationID"`
 }

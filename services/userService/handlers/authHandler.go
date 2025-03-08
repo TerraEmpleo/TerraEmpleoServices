@@ -113,6 +113,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		"message":  "Login successful",
 		"user_id":  user.ID,
 		"email":    user.Email,
+		"role":     user.Role,
 	})
 }
 

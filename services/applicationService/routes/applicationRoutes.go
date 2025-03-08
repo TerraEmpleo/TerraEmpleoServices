@@ -8,4 +8,7 @@ import (
 func ApplicationRoutes(router *mux.Router) {
 	router.HandleFunc("/applications/apply", handlers.ApplyForJob).Methods("POST")
 	router.HandleFunc("/applications", handlers.GetApplications).Methods("GET")
+	router.HandleFunc("/applications/apply", handlers.ApplyForJob).Methods("POST")
+	router.HandleFunc("/applications/user/{user_id}", handlers.GetApplicationsByUser).Methods("GET")
+
 }
